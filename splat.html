@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splat3D</title>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+            border: 1px solid #0a0a0a;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        body.editor-only .hide-on-editor {
+            display: none !important;
+        }
+
+        body.editor-only .container {
+            max-width: 100%;
+            height: 100vh;
+            padding: 10px;
+        }
+
+        body.editor-only .workspace {
+            height: calc(100vh - 20px);
+            margin: 0;
+        }
+
+        header {
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            color: #888888;
+            margin-top: 5px;
+        }
+
+        .workspace {
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 60px;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: #141414;
+            border: 1px solid #282828;
+            border-radius: 15px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-area {
+            flex-grow: 1;
+            background: #000;
+            border: 1px solid #282828;
+            min-height: 50vh;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            overflow: hidden;
+        }
+
+        .group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input,
+        select {
+            background: #000;
+            border: 1px solid #282828;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .toggle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .toggle {
+            background: #1d1d1d;
+            border: 1px solid #282828;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .toggle input {
+            margin-right: 8px;
+        }
+
+        .btn-export {
+            background: #2f5dff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: #000;
+            border: 1px solid #282828;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #282828;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header span {
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .close-btn {
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+        }
+
+        .embed-container {
+            width: 85vw;
+            height: 85vh;
+            position: relative;
+        }
+
+        #modal-frame {
+            background: transparent;
+        }
+
+        .close-float {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .code-view {
+            padding: 20px;
+            position: relative;
+        }
+
+        pre {
+            font-family: 'SFMono-Regular', monospace;
+            font-size: 12px;
+            margin: 0;
+            white-space: pre-wrap;
+            color: #fff;
+        }
+
+        .t-tag {
+            color: #569cd6;
+        }
+
+        .t-attr {
+            color: #9cdcfe;
+        }
+
+        .t-val {
+            color: #ce9178;
+        }
+
+        .copy-abs {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #2f5dff;
+            border: none;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .tutorial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .card {
+            background: #141414;
+            border: 1px solid #282828;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .card h4 {
+            margin: 0 0 10px 0;
+        }
+
+        .card p {
+            font-size: 13px;
+            color: #888888;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .archive-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            background: #282828;
+            border: 1px solid #282828;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .archive-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 25px;
+            background: #141414;
+            cursor: pointer;
+        }
+
+        .archive-item:hover {
+            background: #1c1c1c;
+        }
+
+        .archive-item h4 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .archive-item span {
+            font-size: 12px;
+            color: #2f5dff;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 80px;
+            padding: 40px 0;
+            border-top: 1px solid #282828;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-left {
+            color: #888888;
+            font-size: 13px;
+        }
+
+        .footer-nav {
+            display: flex;
+            gap: 25px;
+        }
+
+        .footer-link {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: #888888;
+            font-size: 13px;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: #ffffff;
+        }
+
+        .footer-link img {
+            width: 14px;
+            height: 14px;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 800px) {
+            .workspace {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .embed-container {
+                width: 95vw;
+                height: 70vh;
+            }
+
+            footer {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-nav {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="hide-on-editor">
+            <h1>Splat3D</h1>
+            <p class="subtitle">Performant rendering for realistic robot scans.</p>
+        </header>
+
+        <div class="workspace">
+            <div class="sidebar">
+                <div class="group">
+                    <label>Model source</label>
+                    <input type="text" id="cfg-src" value="09306445-a8a0-418b-8c29-031ce5c75fef" oninput="update()">
+                </div>
+                <div class="group">
+                    <label>Render Mode</label>
+                    <select id="cfg-mode" onchange="update()">
+                        <option value="object">Object</option>
+                        <option value="full">Full Scene</option>
+                    </select>
+                </div>
+                <div class="group">
+                    <label>Camera (x y z fov)</label>
+                    <input type="text" id="cfg-pos" value="2x2.3x4x40" oninput="update()">
+                </div>
+                <div class="toggle-grid">
+                    <label class="toggle"><input type="checkbox" id="cfg-rot" checked onchange="update()"> Auto
+                        Rotate</label>
+                    <label class="toggle"><input type="checkbox" id="cfg-int" checked onchange="update()">
+                        Interactable</label>
+                    <label class="toggle"><input type="checkbox" id="cfg-hint" checked onchange="update()"> Show
+                        Hint</label>
+                    <label class="toggle"><input type="checkbox" id="cfg-auto" onchange="update()"> Autostart</label>
+                </div>
+                <div class="group">
+                    <label>Auto-Rotate Speed</label>
+                    <input type="number" id="cfg-spd" value="5" oninput="update()">
+                </div>
+                <button class="btn-export" onclick="toggleModal('export-modal', true)">Export embed</button>
+            </div>
+
+            <div class="preview-area">
+                <iframe id="preview-frame" scrolling="no"></iframe>
+            </div>
+        </div>
+
+        <div class="hide-on-editor">
+            <h2>Creation Tutorial</h2>
+            <div class="tutorial-grid">
+                <div class="card">
+                    <h4>Step 1:</h4>
+                    <p>Download the Luma App. Follow the built-in scanning tutorial.</p>
+                </div>
+                <div class="card">
+                    <h4>Step 2:</h4>
+                    <p>Once the model processes, copy the share link and paste it into the embed builder above.</p>
+                </div>
+            </div>
+
+            <h2>Featured Robots</h2>
+            <div class="archive-list" id="gallery"></div>
+        </div>
+
+        <footer class="hide-on-editor">
+            <div class="footer-left">
+                <a href="https://wireclippers.org/" class="footer-link" target="_blank">
+                    <img src="https://i0.wp.com/wireclippers.org/wp-content/uploads/2024/02/emblem-non.png"> A project from The Wire Clippers
+                </a>
+            </div>
+            <nav class="footer-nav">
+                <a href="https://lumalabs.ai/featured" class="footer-link" target="_blank">
+                    <img src="https://lumalabs.ai/favicons/favicon-white.ico"> Powered by Luma 3D
+                </a>
+                <a href="https://github.com/PHSWireClippers5902/robotembed" class="footer-link" target="_blank">
+                    <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/github-white-icon.png"> Open source on GitHub
+                </a>
+            </nav>
+        </footer>
+    </div>
+
+    <div class="overlay" id="export-modal" onclick="closeOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <span>Embed code</span>
+                <button class="close-btn" onclick="toggleModal('export-modal', false)">✕</button>
+            </div>
+            <div class="code-view">
+                <button class="copy-abs" onclick="copyCode()">COPY</button>
+                <pre id="code-display"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="preview-modal" onclick="closeOverlay(event)">
+        <div class="embed-container">
+            <button class="close-float" onclick="toggleModal('preview-modal', false)">✕</button>
+            <iframe id="modal-frame" scrolling="no"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const robots = [
+            { id: "9fc7e6b6-b6af-4ce6-9b46-5314c5c79d80", team: "157", year: "2026" },
+            { id: "09306445-a8a0-418b-8c29-031ce5c75fef", team: "5902", year: "2025" },
+            { id: "d41879ee-bdc2-419c-b2b6-5ae181cf1db1", team: "6367", year: "2025" },
+            { id: "e8e05754-bf3f-4b97-9a50-013c3cae2d41", team: "6324", year: "2025" },
+            { id: "ed6ee609-3c21-4ed5-9b77-3b14460259a9", team: "1922", year: "2025" },
+            { id: "ed0c1cdd-b9c8-464d-9163-e886d55b5e16", team: "166", year: "2025" }
+        ];
+
+        function update() {
+            const settings = {
+                src: document.getElementById('cfg-src').value.split('/').pop(),
+                mode: document.getElementById('cfg-mode').value,
+                pos: document.getElementById('cfg-pos').value,
+                spd: document.getElementById('cfg-spd').value,
+                rot: document.getElementById('cfg-rot').checked,
+                int: document.getElementById('cfg-int').checked,
+                hint: document.getElementById('cfg-hint').checked,
+                auto: document.getElementById('cfg-auto').checked
+            };
+
+            let attrs = `source="${settings.src}" mode="${settings.mode}" campos="${settings.pos}" autospeed="${settings.spd}"`;
+            if (!settings.rot) attrs += ` noautorotate`;
+            if (!settings.int) attrs += ` nointeract`;
+            if (!settings.hint) attrs += ` nohint`;
+            if (settings.auto) attrs += ` autostart`;
+
+            const codeText = `<span class="t-tag">&lt;splat3D</span>\n  <span class="t-attr">class</span>=<span class="t-val">"splat3D"</span>\n  <span class="t-attr">${attrs.split(' ').join('\n  ').replace(/=/g, '</span>=<span class="t-val">')}</span>\n<span class="t-tag">&gt;&lt;/splat3D&gt;</span>\n\n<span class="t-tag">&lt;style&gt;</span>\n  <span class="t-attr">.splat3D</span> {\n    <span class="t-attr">height</span>: <span class="t-val">500px</span>;\n    <span class="t-attr">width</span>: <span class="t-val">100%</span>;\n  }\n<span class="t-tag">&lt;/style&gt;</span>\n\n<span class="t-tag">&lt;script</span> <span class="t-attr">src</span>=<span class="t-val">"https://phswireclippers5902.github.io/robotembed/lib.js"</span><span class="t-tag">&gt;&lt;/script&gt;</span>`;
+            document.getElementById('code-display').innerHTML = codeText;
+
+            const frameHTML = `<style>body{margin:0;background:transparent;overflow:hidden;}.splat3D{width:100vw;height:100vh;border-radius:15px;}</style><splat3D class="splat3D" ${attrs}></splat3D><script src="https://phswireclippers5902.github.io/robotembed/lib.js"><\/script>`;
+            document.getElementById('preview-frame').srcdoc = frameHTML;
+        }
+
+        function toggleModal(id, show) {
+            document.getElementById(id).style.display = show ? 'flex' : 'none';
+            if (!show && id === 'preview-modal') document.getElementById('modal-frame').srcdoc = '';
+        }
+
+        function closeOverlay(e) {
+            if (e.target.classList.contains('overlay')) {
+                toggleModal(e.target.id, false);
+            }
+        }
+
+        function openRobot(id, team) {
+            toggleModal('preview-modal', true);
+            const html = `<style>body{margin:0;background:transparent;overflow:hidden;}.splat3D{width:100vw;height:100vh;border-radius:15px;}</style><splat3D class="splat3D" source="${id}" mode="object" autostart></splat3D><script src="https://phswireclippers5902.github.io/robotembed/lib.js"><\/script>`;
+            document.getElementById('modal-frame').srcdoc = html;
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(document.getElementById('code-display').innerText);
+            const btn = document.querySelector('.copy-abs');
+            btn.innerText = 'COPIED';
+            setTimeout(() => btn.innerText = 'COPY', 2000);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('id')) {
+            document.body.classList.add('editor-only');
+            document.getElementById('cfg-src').value = urlParams.get('id');
+        }
+
+        const gal = document.getElementById('gallery');
+        robots.forEach(r => {
+            const item = document.createElement('div');
+            item.className = 'archive-item';
+            item.innerHTML = `<h4>Team ${r.team} Robot</h4><span>VIEW</span>`;
+            item.onclick = () => openRobot(r.id, r.team);
+            gal.appendChild(item);
+        });
+
+        update();
+    </script>
+</body>
+</html>
