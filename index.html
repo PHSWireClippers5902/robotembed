@@ -746,7 +746,10 @@
             document.getElementById('render').addEventListener('touchmove', function handleClick(event) {
                 if (dragging || true) rendercounter = -5;
             });
-            window.addEventListener('scroll', function() {
+            document.getElementById('render').addEventListener('scroll', function() {
+                rendercounter = -5;
+            });
+            document.getElementById('render').addEventListener('wheel', function() {
                 rendercounter = -5;
             });
             document.getElementById('render').addEventListener('mouseup', function handleClick(event) {
