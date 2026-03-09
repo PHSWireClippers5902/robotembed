@@ -61,7 +61,7 @@ function loadSplats() {
             params.set(attr.name, attr.value);
         };
 
-        var src = `https://phswireclippers5902.github.io/robotembed/?${params.toString()}`;
+        var src = `https://pooiod7.pages.dev/widgets/splat3D?${params.toString()}`;
 
         modeliframe.src = src;
         modeliframe.dataset.originalSrc = src;
@@ -77,3 +77,7 @@ function loadSplats() {
 };
 
 loadSplats();
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSplats();
+});
