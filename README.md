@@ -26,7 +26,7 @@ If the script isn't included at the end of the page, some model3 elements will n
 <script> // Include this at the end of the page for all model3 elements to load
   document.querySelectorAll('model3').forEach(function(player) {
   	var modeliframe = document.createElement('iframe');
-  	modeliframe.src = `https://phswireclippers5902.github.io/2024-robotembed?source=${player.getAttribute('src')}`;
+  	modeliframe.src = `https://phswireclippers5902.github.io/robotembed?source=${player.getAttribute('src')}`;
   	modeliframe.style.margin = "auto";
   	modeliframe.style.border = "none";
   	modeliframe.style.width = "100%";
